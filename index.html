@@ -1,0 +1,245 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Smart Finance Advisor + PDF + Charts</title>
+
+<!-- Chart.js for Pie Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- jsPDF for PDF Report -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(to right, #4facfe, #00f2fe);
+        padding: 0;
+        margin: 0;
+        color: #fff;
+    }
+
+    .container {
+        width: 85%;
+        margin: auto;
+        padding: 20px;
+    }
+
+    h1, h2 {
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .card {
+        background: rgba(255,255,255,0.2);
+        padding: 20px;
+        margin-top: 20px;
+        border-radius: 15px;
+        backdrop-filter: blur(8px);
+    }
+
+    input {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: none;
+        margin-top: 5px;
+        margin-bottom: 15px;
+    }
+
+    button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: #ffd369;
+        color: #000;
+        font-size: 18px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-top: 20px;
+    }
+
+    .output {
+        margin-top: 20px;
+        padding: 20px;
+        border-radius: 10px;
+        background: rgba(0,0,0,0.4);
+    }
+
+    canvas {
+        margin-top: 25px;
+        background: rgba(255,255,255,0.15);
+        padding: 15px;
+        border-radius: 10px;
+    }
+
+    .advice-box {
+        background: rgba(255,255,255,0.2);
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 20px;
+        justify-items: ;
+    }
+    #logo{
+      justify-items: center;
+      padding-left: 670px;: ;
+    }
+    
+    
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>💹 Smart Finance Advisor with PDF Report & Charts</h1>
+<h2>From Students of MMCOE</h2>
+<div class="flex-center">
+<img id="logo" src="https://mmcoe.edu.in/international-conference-2026/wp-content/uploads/2025/01/logo.png"  style="width:250px;height:250px;">
+</div>
+    <!-- Income -->
+    <div class="card">
+        <h2>Income</h2>
+        <input id="salary" type="number" placeholder="Salary">
+        <input id="otherIncome" type="number" placeholder="Other Income">
+         <input id="MMCOE Bonus" type="number" placeholder="MMCOE Bonus">
+    </div>
+
+    <!-- Expenses -->
+    <div class="card">
+        <h2>Expenses</h2>
+
+        <input id="home" type="number" placeholder="Home / Rent">
+        <input id="food" type="number" placeholder="Food & Groceries">
+        <input id="transport" type="number" placeholder="Transport">
+        <input id="bills" type="number" placeholder="Bills (Electricity/Wifi)">
+        <input id="subscriptions" type="number" placeholder="Subscriptions">
+        <input id="shopping" type="number" placeholder="Shopping">
+        <input id="entertainment" type="number" placeholder="Entertainment">
+        <input id="EMI" type="number" placeholder="EMI">
+        <input id="LIC" type="number" placeholder="LIC">
+        <input id="others" type="number" placeholder="Other expenses">
+    </div>
+
+    <button onclick="analyze()">Analyze & Generate Chart</button>
+
+    <div class="output" id="result"></div>
+
+    <canvas id="expenseChart" width="400" height="300"></canvas>
+
+    <button onclick="downloadPDF()">Download PDF Report</button>
+
+</div>
+
+<script>
+
+function val(id){ return Number(document.getElementById(id).value) || 0; }
+
+let chartRef = null;
+
+function analyze() {
+
+    let income = val("salary") + val("otherIncome") +val("MMCOE Bonus");
+
+    let expenses = {
+        Home: val("home"),
+        Food: val("food"),
+        Transport: val("transport"),
+        Bills: val("bills"),
+        Subscriptions: val("subscriptions"),
+        Shopping: val("shopping"),
+        Entertainment: val("entertainment"),
+        EMI: val("EMI"),
+        LIC: val("LIC"),
+        Others: val("others")
+    };
+
+    let totalExpenses = Object.values(expenses).reduce((a,b)=>a+b,0);
+    let balance = income - totalExpenses;
+
+    let advice = generateAdvice(balance, income);
+
+    document.getElementById("result").innerHTML = `
+        <h2>Monthly Summary</h2>
+        <p><b>Income:</b> ₹ ${income}</p>
+        <p><b>Total Expenses:</b> ₹ ${totalExpenses}</p>
+        <p><b>Remaining Balance:</b> ₹ ${balance}</p>
+
+        <div class="advice-box">
+            ${advice}
+        </div>
+    `;
+
+    generatePieChart(expenses);
+}
+
+function generatePieChart(expenses){
+
+    let ctx = document.getElementById("expenseChart");
+
+    if(chartRef){
+        chartRef.destroy(); // Refresh chart
+    }
+
+    chartRef = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(expenses),
+            datasets: [{
+                data: Object.values(expenses),
+                backgroundColor: [
+                    '#ff6b6b', '#feca57', '#1dd1a1', '#5f27cd',
+                    '#ff9f43', '#48dbfb', '#ee5253', '#10ac84'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+}
+
+function generateAdvice(balance, income){
+    let msg = "";
+
+   if(balance < 0){
+        msg += `<p style="color:red">⚠ You are spending more than you earn. Reduce expenses immediately.</p>`;
+    }
+    if(balance > 0 && balance < income*0.15){
+        msg += `
+        <p>🟡 You should save more. Recommended:</p>
+        <ul>
+            <li>Start RD or small SIP</li>
+            <li>Build emergency fund</li>
+            <li>Avoid unnecessary shopping</li>
+        </ul>`;
+    }
+    if(balance >= income*0.15){
+        msg += `
+        <p>🟢 Your finances look stable. Suggested investments:</p>
+        <ul>
+            <li>Index Fund SIP (best long term)</li>
+            <li>Gold ETF (5–10%)</li>
+            <li>FD for stability</li>
+            <li>NPS for retirement</li>
+        </ul>`;
+    }
+
+    msg += `
+    <h3>Extra Income Opportunities</h3>
+    <ul>
+        <li>Freelancing (Coding, Writing)</li>
+        <li>Reselling</li>
+        <li>Blog or YouTube</li>
+    </ul>`;
+
+    return msg;
+}
+
+</script>
+</body>
+</html>
+
